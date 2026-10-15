@@ -25,7 +25,9 @@ export default function PrintReportsUnifiedView({
   year, 
   onMonthChange, 
   onYearChange,
-  transactions = []
+  transactions = [],
+  initialCourse,
+  initialShift
 }) {
   const [subTab, setSubTab] = useState('print'); // 'print' | 'monthly' | 'audit'
 
@@ -79,7 +81,12 @@ export default function PrintReportsUnifiedView({
 
       {/* SUB-ABA 1: FOLHA OFICIAL PARA IMPRESSÃO A4 (GOVERNO SP & FAT) */}
       {subTab === 'print' && (
-        <PrintableStockList items={items} schoolName={schoolName} />
+        <PrintableStockList 
+          items={items} 
+          schoolName={schoolName}
+          initialCourse={initialCourse}
+          initialShift={initialShift}
+        />
       )}
 
       {/* SUB-ABA 2: RELATÓRIOS MENSAIS E FINANCEIROS */}

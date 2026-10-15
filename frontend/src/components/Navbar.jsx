@@ -16,7 +16,8 @@ import {
   UtensilsCrossed,
   Zap,
   Layers,
-  Sparkles
+  Sparkles,
+  GraduationCap
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -32,9 +33,10 @@ export default function Navbar({
   const urgentCount = dashboardData?.expiringIn7DaysCount || 0;
   const totalAlerts = expiredCount + urgentCount;
 
-  // Experiência 1: Cozinha Integrada (3 Núcleos Unificados)
+  // Experiência 1: Cozinha Integrada (Aulas, Cursos & Turmas, Despensa, Folha A4)
   const integratedNavItems = [
     { id: 'kitchen-daily', label: 'Aulas & Rotina', icon: UtensilsCrossed },
+    { id: 'courses', label: 'Cursos & Turmas', icon: GraduationCap },
     { 
       id: 'pantry-unified', 
       label: 'Despensa & Insumos', 
@@ -45,9 +47,10 @@ export default function Navbar({
     { id: 'official-reports', label: 'Folha A4 & Relatórios', icon: Printer }
   ];
 
-  // Experiência 2: ERP Modular Clássico (7 Menus)
+  // Experiência 2: ERP Modular Clássico (Dashboard, Cursos, Catálogo, Compras, Consumo, Validades, Relatórios, Impressão)
   const classicNavItems = [
     { id: 'dashboard', label: 'Painel Inicial', icon: LayoutDashboard },
+    { id: 'courses', label: 'Cursos & Turmas', icon: GraduationCap },
     { id: 'catalog', label: 'Cadastro de Alimentos', icon: Apple },
     { id: 'purchases', label: 'Compras e Entradas', icon: PackagePlus },
     { id: 'consumption', label: 'Consumo e Saídas', icon: Flame },

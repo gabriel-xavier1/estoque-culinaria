@@ -8,6 +8,9 @@ import {
   Wheat, 
   Pizza, 
   Cake, 
+  Sun,
+  Sunset,
+  Moon,
   Clock, 
   AlertTriangle, 
   CheckCircle2, 
@@ -43,7 +46,7 @@ export default function KitchenDailyView({
   const [selectedFoodItem, setSelectedFoodItem] = useState(null);
   const [actionQuantity, setActionQuantity] = useState('');
   const [actionExpDate, setActionExpDate] = useState('');
-  const [actionNotes, setActionNotes] = useState('');
+  const [actionShift, setActionShift] = useState('tarde'); // 'manha' | 'tarde' | 'noite'
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!data) return null;
@@ -90,15 +93,21 @@ export default function KitchenDailyView({
     e.preventDefault();
     if (!selectedFoodItem || !actionQuantity || parseFloat(actionQuantity) <= 0) return;
     setIsSubmitting(true);
+    const shiftLabel = actionShift === 'manha' 
+      ? 'Manhã (08:00 às 12:00)' 
+      : actionShift === 'tarde' 
+        ? 'Tarde (13:00 às 17:00)' 
+        : 'Noite (18:00 às 22:00)';
+
     try {
       if (onRegisterConsumption) {
         await onRegisterConsumption({
           foodItemId: selectedFoodItem.id,
           quantity: parseFloat(actionQuantity),
-          activity: selectedCourse !== 'all' ? `Aula Prática - ${selectedCourse}` : 'Aula Prática de Culinária',
+          activity: `${selectedCourse !== 'all' ? selectedCourse : 'Culinária'} - Turma ${shiftLabel}`,
           responsible: 'Chef de Aula',
           reason: 'Consumo em aula',
-          notes: actionNotes || 'Baixa de aula prática diária'
+          notes: actionNotes || `Consumo da Turma ${shiftLabel}`
         });
       }
       setQuickActionModal(null);
@@ -379,6 +388,51 @@ export default function KitchenDailyView({
               </button>
             </div>
             <form onSubmit={handleQuickConsumeSubmit} className="p-4 space-y-3.5">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Horário da Turma (3 Turnos):</label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setActionShift('manha')}
+                    className={`flex flex-col items-center justify-center p-2 rounded-xl border text-xs font-bold transition-all ${
+                      actionShift === 'manha'
+                        ? 'bg-amber-100 border-amber-500 text-amber-900 shadow-xs'
+                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Sun className="w-4 h-4 mb-0.5 text-amber-600" />
+                    <span>Manhã</span>
+                    <span className="text-[10px] font-normal text-slate-500">08h - 12h</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActionShift('tarde')}
+                    className={`flex flex-col items-center justify-center p-2 rounded-xl border text-xs font-bold transition-all ${
+                      actionShift === 'tarde'
+                        ? 'bg-amber-100 border-amber-500 text-amber-900 shadow-xs'
+                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Sunset className="w-4 h-4 mb-0.5 text-orange-600" />
+                    <span>Tarde</span>
+                    <span className="text-[10px] font-normal text-slate-500">13h - 17h</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActionShift('noite')}
+                    className={`flex flex-col items-center justify-center p-2 rounded-xl border text-xs font-bold transition-all ${
+                      actionShift === 'noite'
+                        ? 'bg-amber-100 border-amber-500 text-amber-900 shadow-xs'
+                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Moon className="w-4 h-4 mb-0.5 text-indigo-600" />
+                    <span>Noite</span>
+                    <span className="text-[10px] font-normal text-slate-500">18h - 22h</span>
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Ingrediente usado:</label>
                 <select

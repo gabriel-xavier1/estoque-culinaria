@@ -41,22 +41,33 @@ const COURSE_MAP = {
   'Cozinha Geral': 'Cozinha Geral & Técnicas Gastronômicas'
 };
 
-export default function PrintableStockList({ items, schoolName }) {
+const SHIFT_MAP = {
+  'manha': { periodo: 'Manhã', horario: '08:00 às 12:00' },
+  'tarde': { periodo: 'Tarde', horario: '13:00 às 17:00' },
+  'noite': { periodo: 'Noite', horario: '18:00 às 22:00' }
+};
+
+export default function PrintableStockList({ items, schoolName, initialCourse, initialShift }) {
   // Tipo de Lista: 'purchases' (Lista de Compras) ou 'inventory' (Geral de Estoque)
   const [listType, setListType] = useState('purchases');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
-  const [selectedCourse, setSelectedCourse] = useState('Pizzaiolo');
+  const [selectedCourse, setSelectedCourse] = useState(initialCourse || 'Pizzaiolo');
+  const [selectedShift, setSelectedShift] = useState(initialShift || 'tarde');
   const [selectedStatus, setSelectedStatus] = useState('Todos');
   const [onlyNeedsPurchase, setOnlyNeedsPurchase] = useState(true);
 
   // Dados Institucionais do Cabeçalho (Conforme foto da Fundação FAT & Governo do Estado de SP)
-  const [headerInfo, setHeaderInfo] = useState({
-    curso: 'Pizzaiolo: Preparo de Pizzas',
-    periodo: 'Tarde',
-    horario: '13:00 às 17:30',
-    inicioFim: '06/07/2026 à 17/07/2026',
-    local: 'Praça da Cidadania de Guarulhos',
-    instrutor: 'Chef Responsável / Instrutor'
+  const [headerInfo, setHeaderInfo] = useState(() => {
+    const initCourse = initialCourse || 'Pizzaiolo';
+    const initShift = SHIFT_MAP[initialShift || 'tarde'] || SHIFT_MAP['tarde'];
+    return {
+      curso: COURSE_MAP[initCourse] || (initCourse === 'Todos' ? 'Cursos Gerais de Culinária' : `Curso de ${initCourse}`),
+      periodo: initShift.periodo,
+      horario: initShift.horario,
+      inicioFim: '06/07/2026 à 17/07/2026',
+      local: 'Praça da Cidadania de Guarulhos',
+      instrutor: 'Chef Responsável / Instrutor'
+    };
   });
 
   const [isEditingHeader, setIsEditingHeader] = useState(false);
@@ -67,6 +78,18 @@ export default function PrintableStockList({ items, schoolName }) {
       ...prev,
       curso: COURSE_MAP[course] || (course === 'Todos' ? 'Cursos Gerais de Culinária' : `Curso de ${course}`)
     }));
+  };
+
+  const handleShiftFilterChange = (shiftId) => {
+    setSelectedShift(shiftId);
+    const shiftInfo = SHIFT_MAP[shiftId];
+    if (shiftInfo) {
+      setHeaderInfo(prev => ({
+        ...prev,
+        periodo: shiftInfo.periodo,
+        horario: shiftInfo.horario
+      }));
+    }
   };
 
   // Filtragem dos Itens por Categoria, Situação e CURSO
@@ -308,6 +331,21 @@ export default function PrintableStockList({ items, schoolName }) {
             <option value="Pizzaiolo">Pizzaiolo (Farinhas, Mussarela, Molhos)</option>
             <option value="Confeitaria">Confeitaria (Nata, Chocolates, Gotas)</option>
             <option value="Cozinha Geral">Cozinha Geral (Carnes, Pescados, Arroz)</option>
+          </select>
+        </div>
+
+        {/* SELEÇÃO DO TURNO (3 Horários: Manhã, Tarde, Noite) */}
+        <div className="flex items-center gap-2">
+          <Clock className="w-4 h-4 text-slate-500" />
+          <span className="font-bold text-slate-800">Turma / Turno:</span>
+          <select
+            value={selectedShift}
+            onChange={(e) => handleShiftFilterChange(e.target.value)}
+            className="px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-amber-500"
+          >
+            <option value="manha">Manhã (08:00 às 12:00)</option>
+            <option value="tarde">Tarde (13:00 às 17:00)</option>
+            <option value="noite">Noite (18:00 às 22:00)</option>
           </select>
         </div>
 

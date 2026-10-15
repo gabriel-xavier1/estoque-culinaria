@@ -14,6 +14,7 @@ import AlertConfigModal from './components/AlertConfigModal';
 import KitchenDailyView from './components/KitchenDailyView';
 import PantryUnifiedView from './components/PantryUnifiedView';
 import PrintReportsUnifiedView from './components/PrintReportsUnifiedView';
+import CoursesModule from './components/CoursesModule';
 
 import { api } from './api';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
@@ -44,6 +45,10 @@ export default function App() {
     attentionDays: 30,
     schoolName: 'Escola de Culinária & Gastronomia Prática'
   });
+
+  // Curso e Turno Selecionados para Impressão
+  const [printSelectedCourse, setPrintSelectedCourse] = useState('Todos');
+  const [printSelectedShift, setPrintSelectedShift] = useState('tarde');
 
   // Report Month / Year
   const today = new Date();
@@ -78,6 +83,13 @@ export default function App() {
     } else {
       setActiveTab(tab);
     }
+  };
+
+  const handleSelectCourseShiftForPrint = (courseName, shiftId = 'tarde') => {
+    setPrintSelectedCourse(courseName);
+    setPrintSelectedShift(shiftId ? shiftId.toLowerCase() : 'tarde');
+    setActiveTab(appExperience === 'integrated' ? 'official-reports' : 'print');
+    showToast(`Folha A4 aberta para o curso "${courseName}" no turno da ${shiftId}!`);
   };
 
   // Carregar todos os dados da API
@@ -290,6 +302,15 @@ export default function App() {
                   />
                 )}
 
+                {activeTab === 'courses' && (
+                  <CoursesModule
+                    items={items}
+                    onNavigate={handleNavigate}
+                    onOpenConsumptionModal={() => setActiveTab('kitchen-daily')}
+                    onSelectCourseShiftForPrint={handleSelectCourseShiftForPrint}
+                  />
+                )}
+
                 {activeTab === 'pantry-unified' && (
                   <PantryUnifiedView
                     items={items}
@@ -315,6 +336,8 @@ export default function App() {
                     onMonthChange={handleMonthChange}
                     onYearChange={handleYearChange}
                     transactions={transactions}
+                    initialCourse={printSelectedCourse}
+                    initialShift={printSelectedShift}
                   />
                 )}
               </>
@@ -336,6 +359,15 @@ export default function App() {
                     onDiscardBatch={handleDiscardBatch}
                     onOpenPurchaseModal={() => setActiveTab('purchases')}
                     onOpenConsumptionModal={() => setActiveTab('consumption')}
+                  />
+                )}
+
+                {activeTab === 'courses' && (
+                  <CoursesModule
+                    items={items}
+                    onNavigate={setActiveTab}
+                    onOpenConsumptionModal={() => setActiveTab('consumption')}
+                    onSelectCourseShiftForPrint={handleSelectCourseShiftForPrint}
                   />
                 )}
 
@@ -392,6 +424,8 @@ export default function App() {
                   <PrintableStockList
                     items={items}
                     schoolName={alertConfig.schoolName}
+                    initialCourse={printSelectedCourse}
+                    initialShift={printSelectedShift}
                   />
                 )}
 
