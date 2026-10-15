@@ -9,11 +9,28 @@ import MonthlyReports from './components/MonthlyReports';
 import PrintableStockList from './components/PrintableStockList';
 import StockAudit from './components/StockAudit';
 import AlertConfigModal from './components/AlertConfigModal';
+
+// Experiência 1: Telas Integradas (Mais Fácil / Sem Fragmentação)
+import KitchenDailyView from './components/KitchenDailyView';
+import PantryUnifiedView from './components/PantryUnifiedView';
+import PrintReportsUnifiedView from './components/PrintReportsUnifiedView';
+
 import { api } from './api';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  // Controle Global das 2 Versões de Experiência do App:
+  // 'integrated': Versão 1 - Cozinha Integrada (Mais Fácil / 3 Áreas / Mobile-first)
+  // 'classic': Versão 2 - Painel Clássico (7 Módulos ERP Tradicionais)
+  const [appExperience, setAppExperience] = useState(() => {
+    return localStorage.getItem('culinary_app_experience') || 'integrated';
+  });
+
+  const [activeTab, setActiveTab] = useState(() => {
+    const exp = localStorage.getItem('culinary_app_experience') || 'integrated';
+    return exp === 'integrated' ? 'kitchen-daily' : 'dashboard';
+  });
+
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
 
@@ -42,7 +59,28 @@ export default function App() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  // Load All Application Data
+  // Alternador de Experiência Global
+  const handleSwitchExperience = (newExp) => {
+    setAppExperience(newExp);
+    localStorage.setItem('culinary_app_experience', newExp);
+    const targetDefault = newExp === 'integrated' ? 'kitchen-daily' : 'dashboard';
+    setActiveTab(targetDefault);
+    showToast(`Alternado para ${newExp === 'integrated' ? 'Versão 1: Cozinha Integrada (App Fácil)' : 'Versão 2: Painel Clássico (7 Módulos)'}`);
+  };
+
+  // Navegador inteligente que respeita a experiência atual
+  const handleNavigate = (tab) => {
+    if (appExperience === 'integrated') {
+      if (tab === 'print' || tab === 'reports') setActiveTab('official-reports');
+      else if (tab === 'catalog' || tab === 'expiration' || tab === 'audit') setActiveTab('pantry-unified');
+      else if (tab === 'consumption' || tab === 'purchases' || tab === 'dashboard') setActiveTab('kitchen-daily');
+      else setActiveTab(tab);
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
+  // Carregar todos os dados da API
   const loadData = useCallback(async () => {
     try {
       const [dash, foodItems, batchList, txList, cfg, rpt] = await Promise.all([
@@ -217,8 +255,10 @@ export default function App() {
         </div>
       )}
 
-      {/* Navigation */}
+      {/* Navigation com o Seletor Global de Versões */}
       <Navbar
+        appExperience={appExperience}
+        onSwitchExperience={handleSwitchExperience}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         dashboardData={dashboardData}
@@ -234,81 +274,134 @@ export default function App() {
           </div>
         ) : (
           <>
-            {activeTab === 'dashboard' && (
-              <Dashboard
-                data={dashboardData}
-                items={items}
-                onNavigate={setActiveTab}
-                onRegisterConsumption={handleRegisterConsumption}
-                onRegisterPurchase={handleRegisterPurchase}
-                onAdjustStock={handleAdjustStock}
-                onDiscardBatch={handleDiscardBatch}
-                onOpenPurchaseModal={() => setActiveTab('purchases')}
-                onOpenConsumptionModal={() => setActiveTab('consumption')}
-              />
+            {/* =========================================================================
+                EXPERIÊNCIA 1: MODO COZINHA INTEGRADA (MAIS FÁCIL / 3 NÚCLEOS UNIFICADOS)
+                ========================================================================= */}
+            {appExperience === 'integrated' && (
+              <>
+                {activeTab === 'kitchen-daily' && (
+                  <KitchenDailyView
+                    data={dashboardData}
+                    items={items}
+                    onNavigate={handleNavigate}
+                    onRegisterConsumption={handleRegisterConsumption}
+                    onRegisterPurchase={handleRegisterPurchase}
+                    onDiscardBatch={handleDiscardBatch}
+                  />
+                )}
+
+                {activeTab === 'pantry-unified' && (
+                  <PantryUnifiedView
+                    items={items}
+                    batches={batches}
+                    onSaveItem={handleSaveItem}
+                    onDeleteItem={handleDeleteItem}
+                    onRegisterConsumption={handleRegisterConsumption}
+                    onRegisterPurchase={handleRegisterPurchase}
+                    onAdjustStock={handleAdjustStock}
+                    onFreezeBatch={handleFreezeBatch}
+                    onThawBatch={handleThawBatch}
+                    onDiscardBatch={handleDiscardBatch}
+                  />
+                )}
+
+                {activeTab === 'official-reports' && (
+                  <PrintReportsUnifiedView
+                    items={items}
+                    schoolName={alertConfig.schoolName}
+                    reportData={reportData}
+                    month={reportMonth}
+                    year={reportYear}
+                    onMonthChange={handleMonthChange}
+                    onYearChange={handleYearChange}
+                    transactions={transactions}
+                  />
+                )}
+              </>
             )}
 
-            {activeTab === 'catalog' && (
-              <FoodCatalog
-                items={items}
-                onSaveItem={handleSaveItem}
-                onDeleteItem={handleDeleteItem}
-                onAdjustStock={handleAdjustStock}
-                onSelectForPurchase={() => setActiveTab('purchases')}
-                onSelectForConsumption={() => setActiveTab('consumption')}
-              />
-            )}
+            {/* =========================================================================
+                EXPERIÊNCIA 2: MODO PAINEL CLÁSSICO (7 MÓDULOS ERP TRADICIONAIS)
+                ========================================================================= */}
+            {appExperience === 'classic' && (
+              <>
+                {activeTab === 'dashboard' && (
+                  <Dashboard
+                    data={dashboardData}
+                    items={items}
+                    onNavigate={setActiveTab}
+                    onRegisterConsumption={handleRegisterConsumption}
+                    onRegisterPurchase={handleRegisterPurchase}
+                    onAdjustStock={handleAdjustStock}
+                    onDiscardBatch={handleDiscardBatch}
+                    onOpenPurchaseModal={() => setActiveTab('purchases')}
+                    onOpenConsumptionModal={() => setActiveTab('consumption')}
+                  />
+                )}
 
-            {activeTab === 'purchases' && (
-              <PurchasesModule
-                items={items}
-                purchases={transactions.filter(t => t.transactionType === 'Entrada')}
-                onRegisterPurchase={handleRegisterPurchase}
-                onOpenPrint={() => setActiveTab('print')}
-              />
-            )}
+                {activeTab === 'catalog' && (
+                  <FoodCatalog
+                    items={items}
+                    onSaveItem={handleSaveItem}
+                    onDeleteItem={handleDeleteItem}
+                    onAdjustStock={handleAdjustStock}
+                    onSelectForPurchase={() => setActiveTab('purchases')}
+                    onSelectForConsumption={() => setActiveTab('consumption')}
+                  />
+                )}
 
-            {activeTab === 'consumption' && (
-              <ConsumptionModule
-                items={items}
-                transactions={transactions}
-                onRegisterConsumption={handleRegisterConsumption}
-              />
-            )}
+                {activeTab === 'purchases' && (
+                  <PurchasesModule
+                    items={items}
+                    purchases={transactions.filter(t => t.transactionType === 'Entrada')}
+                    onRegisterPurchase={handleRegisterPurchase}
+                    onOpenPrint={() => setActiveTab('print')}
+                  />
+                )}
 
-            {activeTab === 'expiration' && (
-              <ExpirationTracker
-                batches={batches}
-                alertConfig={alertConfig}
-                onOpenConfig={() => setIsConfigModalOpen(true)}
-                onDiscardBatch={handleDiscardBatch}
-                onFreezeBatch={handleFreezeBatch}
-                onThawBatch={handleThawBatch}
-              />
-            )}
+                {activeTab === 'consumption' && (
+                  <ConsumptionModule
+                    items={items}
+                    transactions={transactions}
+                    onRegisterConsumption={handleRegisterConsumption}
+                  />
+                )}
 
-            {activeTab === 'reports' && (
-              <MonthlyReports
-                reportData={reportData}
-                month={reportMonth}
-                year={reportYear}
-                onMonthChange={handleMonthChange}
-                onYearChange={handleYearChange}
-              />
-            )}
+                {activeTab === 'expiration' && (
+                  <ExpirationTracker
+                    batches={batches}
+                    alertConfig={alertConfig}
+                    onOpenConfig={() => setIsConfigModalOpen(true)}
+                    onDiscardBatch={handleDiscardBatch}
+                    onFreezeBatch={handleFreezeBatch}
+                    onThawBatch={handleThawBatch}
+                  />
+                )}
 
-            {activeTab === 'print' && (
-              <PrintableStockList
-                items={items}
-                schoolName={alertConfig.schoolName}
-              />
-            )}
+                {activeTab === 'reports' && (
+                  <MonthlyReports
+                    reportData={reportData}
+                    month={reportMonth}
+                    year={reportYear}
+                    onMonthChange={handleMonthChange}
+                    onYearChange={handleYearChange}
+                  />
+                )}
 
-            {activeTab === 'audit' && (
-              <StockAudit
-                items={items}
-                onAdjustStock={handleAdjustStock}
-              />
+                {activeTab === 'print' && (
+                  <PrintableStockList
+                    items={items}
+                    schoolName={alertConfig.schoolName}
+                  />
+                )}
+
+                {activeTab === 'audit' && (
+                  <StockAudit
+                    items={items}
+                    onAdjustStock={handleAdjustStock}
+                  />
+                )}
+              </>
             )}
           </>
         )}
