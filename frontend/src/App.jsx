@@ -237,7 +237,12 @@ export default function App() {
             {activeTab === 'dashboard' && (
               <Dashboard
                 data={dashboardData}
+                items={items}
                 onNavigate={setActiveTab}
+                onRegisterConsumption={handleRegisterConsumption}
+                onRegisterPurchase={handleRegisterPurchase}
+                onAdjustStock={handleAdjustStock}
+                onDiscardBatch={handleDiscardBatch}
                 onOpenPurchaseModal={() => setActiveTab('purchases')}
                 onOpenConsumptionModal={() => setActiveTab('consumption')}
               />
